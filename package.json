@@ -1,0 +1,36 @@
+{
+  "name": "rokucontroller",
+  "version": "1.0.0",
+  "productName": "Roku Controller",
+  "description": "Roku Controller",
+  "main": "main.js",
+  "scripts": {
+    "start": "cd app && npm run build && cd ../ && electron .",
+    "ios": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
+    "windows": "electron-packager . --overwrite --asar=true --platform=win32 --arch=ia32 --icon=assets/icons/win/icon.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Electron Tutorial App\""
+  },
+  "repository": "",
+  "keywords": [
+    "roku",
+    "Controller"
+  ],
+  "author": "Jake boyles",
+  "license": "CC0-1.0",
+  "dependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-preset-node6": "^11.0.0",
+    "body-parser": "^1.17.1",
+    "cors": "^2.8.3",
+    "express": "^4.15.2",
+    "nodemon": "^1.11.0",
+    "path": "^0.12.7",
+    "rokujs": "^1.2.0",
+    "socket.io": "^2.0.1",
+    "socket.io-client": "^2.0.1"
+  },
+  "devDependencies": {
+    "babel-preset-es2015": "^6.24.1",
+    "electron": "^1.6.8",
+    "electron-packager": "^8.7.0"
+  }
+}
