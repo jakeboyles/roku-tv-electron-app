@@ -5,8 +5,11 @@ import Channel from './Channel';
 import Movie from './Movie';
 import io from 'socket.io-client';
 import consts from './constants';
+import keybindings from './keyBindings';
 import './App.css';
 import loading from'../public/images/loading.gif';
+import axios from 'axios';
+
 
 
 class App extends Component {
@@ -20,18 +23,20 @@ class App extends Component {
   }
 
   componentDidMount() {
-  	const socket = io.connect(`http://localhost:${consts.socketPort}`);
+  	const socket = io.connect(`${consts.host}:${consts.socketPort}`);
       socket.on('connected', ()=>{
       	this.setState({
       		connected:'show'
       	});
+
+      	keybindings.bindings();
+
       });
 
       socket.on('channels', (channels)=>{
       	this.setState({
       		channels:channels
       	});
-      	console.log(channels);
       });
 
       socket.emit('new', true);
@@ -50,14 +55,14 @@ class App extends Component {
 		    	<Volume type="up" />
 		    	<Volume type="down" />
 
-		    	<Button type="select" />
+		    	<Button type="home" />
 		    </div>
 
 		    <div className="controls">
 		    	<div className="inner">
 			    	<Button type="up" />
 			    	<Button type="left" />
-			    	<Button type="home" />
+			    	<Button type="select" />
 			    	<Button type="right" />
 			    	<Button type="down" />
 			    	<Button type="rewind" />
@@ -67,7 +72,6 @@ class App extends Component {
 		    </div>
 
 		    <div className="apps">
-		    	<h3>Apps</h3>
 		    	{this.state.channels.map(channel=>{
 		    		return <Channel channelname={channel.name} id="{channel.id}" />
 		    	})}

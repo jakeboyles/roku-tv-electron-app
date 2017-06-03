@@ -11,7 +11,7 @@ class Button extends Component {
   }
 
   click(){
-    axios.get(`http://localhost:${consts.serverPort}/button-${this.props.type}`)
+    axios.get(`${consts.host}:${consts.serverPort}/button-${this.props.type}`)
     .then(function (response) {
       console.log(response);
     });

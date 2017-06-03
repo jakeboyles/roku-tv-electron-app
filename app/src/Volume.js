@@ -12,10 +12,10 @@ class Volume extends Component {
   }
 
   click(){
-    console.log(consts.serverPort);
-    let path = `http://localhost:${consts.serverPort}/volume-${this.props.type}`;
+    const path = `${consts.host}:${consts.serverPort}/volume-${this.props.type}`;
+    
     axios.get(path)
-    .then(function (response) {
+    .then((response)=> {
       console.log(response);
     });
   }

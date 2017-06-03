@@ -11,8 +11,8 @@ class Channel extends Component {
   }
 
   click(){
-    axios.get(`http://localhost:${consts.serverPort}/movie-${this.props.name}`)
-    .then(function (response) {
+    axios.get(`${consts.host}:${consts.serverPort}/movie-${this.props.name}`)
+    .then((response)=> {
       console.log(response);
     });
   }

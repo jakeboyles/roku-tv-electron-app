@@ -18,7 +18,7 @@ applet.use(bodyParser.urlencoded({
     extended: true
 }));
 
-let mainWindow
+let mainWindow;
 let DEVICEFOUND = false;
 let roku;
 
@@ -88,9 +88,7 @@ function discover(){
         // APPS
         applet.get('/app-netflix', (req, res) => {
             roku.launch({ id: 12 }, (err) => {
-                if (err) {
-                    return res.status(300).json({ error: err });
-                }
+                if (err) return res.status(300).json({ error: err });
                 return res.status(200).json({ success: true });
             });
         });
