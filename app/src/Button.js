@@ -7,20 +7,19 @@ class Button extends Component {
 
   constructor(props){
     super();
-    this.click = this.click.bind(this);
   }
 
   click(){
     axios.get(`${consts.host}:${consts.serverPort}/button-${this.props.type}`)
-    .then(function (response) {
-      console.log(response);
+    .then((res)=> {
+      console.log(res);
     });
   }
 
   render() {
     return (
-      <div className="App">
-        <button id={this.props.type} className="button" onClick={this.click}></button>
+      <div className="Button">
+        <button id={this.props.type} className="button" onClick={this.click.bind(this)}></button>
       </div>
     );
   }

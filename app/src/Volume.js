@@ -8,22 +8,21 @@ class Volume extends Component {
 
   constructor(props){
     super();
-    this.click = this.click.bind(this);
   }
 
   click(){
     const path = `${consts.host}:${consts.serverPort}/volume-${this.props.type}`;
     
     axios.get(path)
-    .then((response)=> {
-      console.log(response);
+    .then((res)=> {
+      console.log(res);
     });
   }
 
   render() {
     return (
-      <div className="App">
-        <button id={this.props.type} className="button" onClick={this.click}></button>
+      <div className="Volume">
+        <button id={this.props.type} className="button" onClick={this.click.bind(this)}></button>
       </div>
     );
   }

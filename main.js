@@ -1,19 +1,19 @@
-const electron = require('electron')
-const app = electron.app
-const BrowserWindow = electron.BrowserWindow
-const path = require('path')
-const url = require('url')
+const electron = require('electron');
+const app = electron.app;
+const BrowserWindow = electron.BrowserWindow;
+const path = require('path');
+const Constants = require('./environment');
 const express = require('express');
 const applet = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const request = require('request');
 const Roku = require('rokujs');
-const io = require('socket.io')(8000);
-const { dialog, Tray } = require('electron')
+const io = require('socket.io')(Constants.socketPort);
+const { dialog } = require('electron');
 
 applet.use(bodyParser.json());
-applet.use(express.static(path.resolve(__dirname, './app', 'build')))
+applet.use(express.static(path.resolve(__dirname, './app', 'build')));
 applet.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -30,47 +30,82 @@ io.on('connection', (socket) => {
     });
 });
 
+function registerChannel(channel,cb){
+    applet.get(`/app-${channel.name}`, (req, res)=> {
+        roku.launch({ id: channel.id }, (err) => {
+            if (err) return cb(true,err);
+            return cb(false);
+        });
+        res.status(200).json({ success: true });
+        return cb(false);
+    });
+}
+
+function createWindow() {
+
+    mainWindow = new BrowserWindow({ 
+        width: 450, 
+        height: 600, 
+        icon: path.join(__dirname, 'assets/icons/png/64x64.png') ,
+        frame: false,
+        resizable: false,
+    });
+
+    mainWindow.loadURL(`${Constants.host}:${Constants.serverPort}`);
+
+    // Turn on dev tools
+    // mainWindow.webContents.openDevTools()
+
+    mainWindow.on('closed', ()=> {
+        mainWindow = null
+    });
+}
 
 function discover(){
     Roku.discover((devices) => {
 
         const options = {
-            type:"question",
-            buttons:['Look Again'],
-            title:"No Box Found",
-            message:"We couldn't find a Roku Box on your network."
-        }
+            type: "question",
+            buttons: ['Look Again'],
+            title: "No Box Found",
+            message: "We couldn't find a Roku Box on your network."
+        };
 
         // If no devices found allow them to look again
         if (!devices.length) {
             return dialog.showMessageBox(options,(res)=>{
-                if(res===0) return discover();
+                if(res === 0) return discover();
             })
         }
 
         // Let you choose your box, will make it auto choose
         // if only one is found after testing on more than 1
-        if(devices.length>0){
+        if (devices.length > 0){
 
-            let boxes = devices.map((device,idx)=>{
-                return `${device.address}`;
-            });
+            const boxes = devices.map((device)=> `${device.address}`);
 
             const options = {
-                type:"question",
-                buttons:boxes,
-                title:"Choose Your Roku",
-                message:"Please Choose Your Roku! 😎"
+                type:    "question",
+                buttons: boxes,
+                title:   "Choose Your Roku",
+                message: "Please Choose Your Roku! 😎"
             }
 
-            dialog.showMessageBox(options,(res)=>{
+            dialog.showMessageBox(options, (res)=> {
                 roku = new Roku(devices[res].address);
                 DEVICEFOUND = true;
                 io.emit('connected', true);
-                roku.apps(function (err,channels) {
-                   io.emit('channels', channels);
+
+                // Register routes for channels
+                roku.apps((err,channels)=> {
+                    io.emit('channels', channels);
+                    channels.forEach((channel=> {
+                        registerChannel(channel,(err)=>{
+                          if (err) return console.log(err);
+                        })
+                    }))
                 });
-                return;
+
             })
         }
         
@@ -83,14 +118,6 @@ function discover(){
         applet.get('/volume-down', (req, res) => {
             roku.press('volumedown');
             return res.status(200).json({ success: true });
-        });
-
-        // APPS
-        applet.get('/app-netflix', (req, res) => {
-            roku.launch({ id: 12 }, (err) => {
-                if (err) return res.status(300).json({ error: err });
-                return res.status(200).json({ success: true });
-            });
         });
 
         // BUTTONS
@@ -151,50 +178,28 @@ function discover(){
     });
 }
 
-
 // Run the starter function
 discover();
 
-
-function createWindow() {
-
-    mainWindow = new BrowserWindow({ 
-        width: 450, 
-        height: 600, 
-        icon: path.join(__dirname, 'assets/icons/png/64x64.png') ,
-        frame: false,
-        resizable: false,
-    })
-
-    mainWindow.loadURL('http://localhost:3010/')
-
-    // Turn on dev tools
-    //mainWindow.webContents.openDevTools()
-
-    mainWindow.on('closed', function() {
-        mainWindow = null
-    })
-}
-
 applet.get('/', (req, res) => {
     res.sendFile(path.resolve(__dirname, './app', 'build', 'index.html'));
-})
-
-applet.listen(3010, () => {
-    console.log(`Example app listening on port 3010!`);
 });
 
-app.on('ready', createWindow)
+applet.listen(Constants.serverPort, () => {
+    console.log(`Example app listening on port ${Constants.serverPort}!`);
+});
+
+app.on('ready', createWindow);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
     }
-})
+});
 
 app.on('activate', () => {
     if (mainWindow === null) {
         createWindow()
     }
-})
+});

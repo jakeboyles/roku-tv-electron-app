@@ -2,43 +2,42 @@ import React, { Component } from 'react';
 import Volume from './Volume';
 import Button from './Button';
 import Channel from './Channel';
-import Movie from './Movie';
 import io from 'socket.io-client';
 import consts from './constants';
 import keybindings from './keyBindings';
 import './App.css';
 import loading from'../public/images/loading.gif';
-import axios from 'axios';
-
-
 
 class App extends Component {
 
   constructor(){
   	super();
   	this.state = {
-  		connected:'hide',
-  		channels:[],
+  		connected: 'hide',
+  		channels: [],
   	}
   }
 
   componentDidMount() {
   	const socket = io.connect(`${consts.host}:${consts.socketPort}`);
+      
       socket.on('connected', ()=>{
       	this.setState({
-      		connected:'show'
+      		connected: 'show'
       	});
 
+      	// Register keybindings
       	keybindings.bindings();
 
       });
 
-      socket.on('channels', (channels)=>{
+      socket.on('channels', (channels)=> {
       	this.setState({
       		channels:channels
       	});
       });
 
+      // Say wazzup to the server
       socket.emit('new', true);
   }
 
@@ -47,14 +46,13 @@ class App extends Component {
 	<div className="App">
 		<div id="loading" className={this.state.connected}>
 			<h4>Finding Your Rokus</h4>
-			<img className="logo" src={loading} />
+			<img alt="Loading" className="logo" src={loading} />
 		</div>
 		<div className={this.state.connected}>
 			<h1>Roku</h1>
 		  	<div className="volumes">
 		    	<Volume type="up" />
 		    	<Volume type="down" />
-
 		    	<Button type="home" />
 		    </div>
 
@@ -72,7 +70,7 @@ class App extends Component {
 		    </div>
 
 		    <div className="apps">
-		    	{this.state.channels.map(channel=>{
+		    	{this.state.channels.map(channel=> {
 		    		return <Channel channelname={channel.name} id="{channel.id}" />
 		    	})}
 		    </div>
