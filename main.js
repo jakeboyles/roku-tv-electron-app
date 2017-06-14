@@ -30,8 +30,8 @@ io.on('connection', (socket) => {
     });
 });
 
-function registerChannel(channel,cb){
-    applet.get(`/app-${channel.name}`, (req, res)=> {
+function registerChannel(channel,roku,cb){
+    applet.get(`/app-${channel.id}`, (req, res)=> {
         roku.launch({ id: channel.id }, (err) => {
             if (err) return cb(true,err);
             return cb(false);
@@ -54,11 +54,108 @@ function createWindow() {
     mainWindow.loadURL(`${Constants.host}:${Constants.serverPort}`);
 
     // Turn on dev tools
-    // mainWindow.webContents.openDevTools()
+    //mainWindow.webContents.openDevTools()
 
     mainWindow.on('closed', ()=> {
         mainWindow = null
     });
+}
+
+function registerRoutes(){
+    // VOLUMES 
+    applet.get('/volume-up', (req, res) => {
+        roku.press('volumeup');
+        return res.status(200).json({ success: true });
+    });
+
+    applet.get('/volume-down', (req, res) => {
+        roku.press('volumedown');
+        return res.status(200).json({ success: true });
+    });
+
+    // BUTTONS
+    applet.get('/button-home', (req, res) => {
+        roku.press('home');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-left', (req, res) => {
+        roku.press('left');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-right', (req, res) => {
+        roku.press('right');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-down', (req, res) => {
+        roku.press('down');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-up', (req, res) => {
+        roku.press('up');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-enter', (req, res) => {
+        roku.press('enter');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-home', (req, res) => {
+        roku.press('home');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-rewind', (req, res) => {
+        roku.press('rev');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-fastforward', (req, res) => {
+        roku.press('fwd');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-play', (req, res) => {
+        roku.press('play');
+        return res.status(200).json({ success: true });
+    })
+
+    applet.get('/button-select', (req, res) => {
+        roku.press('select');
+        return res.status(200).json({ success: true });
+    })
+}
+
+
+function controlRoku(info,devices){
+
+    const deviceInfo = info.map((info)=> `${info.friendly_name}`);
+
+    const options = {
+        type:    "question",
+        buttons: deviceInfo,
+        title:   "Choose Your Roku",
+        message: "Please Choose Your Roku! 😎"
+    }
+
+    dialog.showMessageBox(options, (res)=> {
+        roku = new Roku(devices[res].address);
+        DEVICEFOUND = true;
+        io.emit('connected', true);
+
+        roku.apps((err,channels)=> {
+            io.emit('channels', channels);
+            channels.forEach((channel=> {
+                registerChannel(channel,roku,(err)=>{
+                    if (err) return console.log(err);
+                })
+            }))
+        });
+    })
 }
 
 function discover(){
@@ -82,99 +179,23 @@ function discover(){
         // if only one is found after testing on more than 1
         if (devices.length > 0){
 
-            const boxes = devices.map((device)=> `${device.address}`);
+            const boxes = devices
+            .map((device,idx)=> new Roku(devices[idx].address))
+            .map(roku=>{
+                return new Promise((resolve) => {
+                    roku.deviceInfo(info=>{
+                        resolve(info);
+                    })
+                 });
+            });
 
-            const options = {
-                type:    "question",
-                buttons: boxes,
-                title:   "Choose Your Roku",
-                message: "Please Choose Your Roku! 😎"
-            }
-
-            dialog.showMessageBox(options, (res)=> {
-                roku = new Roku(devices[res].address);
-                DEVICEFOUND = true;
-                io.emit('connected', true);
-
-                // Register routes for channels
-                roku.apps((err,channels)=> {
-                    io.emit('channels', channels);
-                    channels.forEach((channel=> {
-                        registerChannel(channel,(err)=>{
-                          if (err) return console.log(err);
-                        })
-                    }))
-                });
-
-            })
-        }
-        
-        // VOLUMES 
-        applet.get('/volume-up', (req, res) => {
-            roku.press('volumeup');
-            return res.status(200).json({ success: true });
-        });
-
-        applet.get('/volume-down', (req, res) => {
-            roku.press('volumedown');
-            return res.status(200).json({ success: true });
-        });
-
-        // BUTTONS
-        applet.get('/button-home', (req, res) => {
-            roku.press('home');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-left', (req, res) => {
-            roku.press('left');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-right', (req, res) => {
-            roku.press('right');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-down', (req, res) => {
-            roku.press('down');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-up', (req, res) => {
-            roku.press('up');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-enter', (req, res) => {
-            roku.press('enter');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-home', (req, res) => {
-            roku.press('home');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-rewind', (req, res) => {
-            roku.press('rev');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-fastforward', (req, res) => {
-            roku.press('fwd');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-play', (req, res) => {
-            roku.press('play');
-            return res.status(200).json({ success: true });
-        })
-
-        applet.get('/button-select', (req, res) => {
-            roku.press('select');
-            return res.status(200).json({ success: true });
-        })
+            Promise
+            .all(boxes)
+            .then(info=> { 
+                controlRoku(info,devices);
+                registerRoutes();
+            });
+        };
     });
 }
 
@@ -185,9 +206,7 @@ applet.get('/', (req, res) => {
     res.sendFile(path.resolve(__dirname, './app', 'build', 'index.html'));
 });
 
-applet.listen(Constants.serverPort, () => {
-    console.log(`Example app listening on port ${Constants.serverPort}!`);
-});
+applet.listen(Constants.serverPort, () => console.log("running!"));
 
 app.on('ready', createWindow);
 

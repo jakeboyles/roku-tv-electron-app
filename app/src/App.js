@@ -71,7 +71,7 @@ class App extends Component {
 
 		    <div className="apps">
 		    	{this.state.channels.map(channel=> {
-		    		return <Channel channelname={channel.name} id="{channel.id}" />
+		    		return <Channel channelid={channel.id} channelname={channel.name} id="{channel.id}" />
 		    	})}
 		    </div>
 		</div>
