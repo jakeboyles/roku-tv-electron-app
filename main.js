@@ -2,14 +2,15 @@ const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 const path = require('path');
-const Constants = require('./environment');
+const CONSTANTS = require('./environment');
+const Routes = require('./routes/routes');
 const express = require('express');
 const applet = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const request = require('request');
 const Roku = require('rokujs');
-const io = require('socket.io')(Constants.socketPort);
+const io = require('socket.io')(CONSTANTS.socketPort);
 const { dialog } = require('electron');
 
 applet.use(bodyParser.json());
@@ -51,7 +52,7 @@ function createWindow() {
         resizable: false,
     });
 
-    mainWindow.loadURL(`${Constants.host}:${Constants.serverPort}`);
+    mainWindow.loadURL(`${CONSTANTS.host}:${CONSTANTS.serverPort}`);
 
     // Turn on dev tools
     //mainWindow.webContents.openDevTools()
@@ -60,76 +61,6 @@ function createWindow() {
         mainWindow = null
     });
 }
-
-function registerRoutes(){
-    // VOLUMES 
-    applet.get('/volume-up', (req, res) => {
-        roku.press('volumeup');
-        return res.status(200).json({ success: true });
-    });
-
-    applet.get('/volume-down', (req, res) => {
-        roku.press('volumedown');
-        return res.status(200).json({ success: true });
-    });
-
-    // BUTTONS
-    applet.get('/button-home', (req, res) => {
-        roku.press('home');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-left', (req, res) => {
-        roku.press('left');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-right', (req, res) => {
-        roku.press('right');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-down', (req, res) => {
-        roku.press('down');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-up', (req, res) => {
-        roku.press('up');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-enter', (req, res) => {
-        roku.press('enter');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-home', (req, res) => {
-        roku.press('home');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-rewind', (req, res) => {
-        roku.press('rev');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-fastforward', (req, res) => {
-        roku.press('fwd');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-play', (req, res) => {
-        roku.press('play');
-        return res.status(200).json({ success: true });
-    })
-
-    applet.get('/button-select', (req, res) => {
-        roku.press('select');
-        return res.status(200).json({ success: true });
-    })
-}
-
 
 function controlRoku(info,devices){
 
@@ -144,6 +75,7 @@ function controlRoku(info,devices){
 
     dialog.showMessageBox(options, (res)=> {
         roku = new Roku(devices[res].address);
+        Routes.registerRoutes(applet,roku);
         DEVICEFOUND = true;
         io.emit('connected', true);
 
@@ -155,6 +87,7 @@ function controlRoku(info,devices){
                 })
             }))
         });
+        
     })
 }
 
@@ -163,7 +96,7 @@ function discover(){
 
         const options = {
             type: "question",
-            buttons: ['Look Again'],
+            buttons: ['Look Again', "Exit"],
             title: "No Box Found",
             message: "We couldn't find a Roku Box on your network."
         };
@@ -172,6 +105,7 @@ function discover(){
         if (!devices.length) {
             return dialog.showMessageBox(options,(res)=>{
                 if(res === 0) return discover();
+                if(res === 1) return app.quit();
             })
         }
 
@@ -193,7 +127,6 @@ function discover(){
             .all(boxes)
             .then(info=> { 
                 controlRoku(info,devices);
-                registerRoutes();
             });
         };
     });
@@ -206,11 +139,10 @@ applet.get('/', (req, res) => {
     res.sendFile(path.resolve(__dirname, './app', 'build', 'index.html'));
 });
 
-applet.listen(Constants.serverPort, () => console.log("running!"));
+applet.listen(CONSTANTS.serverPort, () => console.log("Running!"));
 
 app.on('ready', createWindow);
 
-// Quit when all windows are closed.
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
