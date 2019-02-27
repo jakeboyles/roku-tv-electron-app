@@ -27,6 +27,7 @@ let roku;
 // we have found a tv.
 io.on('connection', (socket) => {
     socket.on('new', (msg) => {
+        console.log(msg);
         if (DEVICEFOUND) io.emit('connected', true);
     });
 });
